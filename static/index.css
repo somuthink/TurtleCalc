@@ -1,0 +1,55 @@
+* {
+  margin: 0;
+}
+html {
+  background-color: #fbfaf5;
+}
+body {
+  padding: 30px;
+}
+section {
+  width: auto;
+}
+
+.main-container {
+  display: flex;
+  flex-direction: row;
+  gap: 100px;
+}
+
+.input {
+  padding-left: 40px;
+}
+
+.oper-list {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  list-style-type: none;
+
+  .oper-list-elem {
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+  }
+
+  .submit-btn {
+    margin-left: 40px;
+    margin-top: 10px;
+  }
+}
+
+.problem {
+  display: flex;
+  gap: 2px;
+  flex-direction: column;
+  padding: 10px;
+}
+
+.server {
+  display: flex;
+  gap: 0px;
+  margin-bottom: 20px;
+  flex-direction: column;
+}

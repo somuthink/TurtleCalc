@@ -1,0 +1,68 @@
+<!doctype html>
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Turtle Calc</title>
+    <script src="https://unpkg.com/htmx.org@1.9.6"></script>
+    <link rel="stylesheet" type="text/css" href="static/index.css" />
+  </head>
+  <body>
+    <div class="main-container">
+      <section>
+        <form
+          class="input"
+          id="search-form"
+          hx-post="/newprob/"
+          hx-trigger="submit"
+          hx-swap="none"
+        >
+          <input
+            type="text"
+            name="problem-enter"
+            placeholder="enter math problem"
+          />
+        </form>
+        <ol
+          reversed="true"
+          hx-post="/getprobs/"
+          hx-trigger="load, every 2s"
+        ></ol>
+      </section>
+
+      <section>
+        <form
+          id="operations-form"
+          hx-post="/updateopers/"
+          hx-trigger="submit"
+          hx-swap="none"
+        >
+          <ul class="oper-list">
+            {{range .Opers}}
+            <li>
+              <div class="oper-list-elem">
+                <h2>{{ . }}</h2>
+                <input
+                  type="text"
+                  name="{{ . }}"
+                  placeholder="enter execution time"
+                />
+              </div>
+            </li>
+            {{ end }}
+            <button class="submit-btn" type="submit">Submit</button>
+          </ul>
+        </form>
+      </section>
+
+      <section>
+        <ul
+          hx-post="/getservers/"
+          hx-trigger="load, every 0.5sec"
+          hx-target="this"
+        ></ul>
+      </section>
+    </div>
+  </body>
+</html>
