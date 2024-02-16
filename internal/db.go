@@ -62,7 +62,7 @@ func CreateAndOpen(name string) *DB {
 
 	_, err = db.Exec(
 		fmt.Sprintf(
-			"CREATE TABLE IF NOT EXISTS `%s`.`problems` (`id` TINYINT NOT NULL AUTO_INCREMENT , `text` TINYTEXT NOT NULL , `interm_val` TINYINT NOT NULL DEFAULT '0' , `answer` TINYINT NOT NULL DEFAULT '0' , `operations_left` TINYINT NOT NULL , PRIMARY KEY (`id`)) ENGINE = InnoDB;",
+			"CREATE TABLE IF NOT EXISTS `%s`.`problems` (`id` TINYINT NOT NULL AUTO_INCREMENT , `text` TINYTEXT NOT NULL , `interm_val` INT NOT NULL DEFAULT '0' , `answer` INT NOT NULL DEFAULT '0' , `operations_left` TINYINT NOT NULL , PRIMARY KEY (`id`)) ENGINE = InnoDB;",
 			name,
 		),
 	)

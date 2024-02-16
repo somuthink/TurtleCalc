@@ -3,43 +3,26 @@ package internal
 import (
 	"fmt"
 	"html/template"
+	"log/slog"
 	"net/http"
 	"strconv"
 )
 
-type Operation struct {
-	id   int
-	text string
-}
-
-type problem struct {
-	id              int
-	text            string
-	interm_val      int
-	answer          int
-	operations_left int
-}
-
-type operation struct {
-	operation string
-	exec_time int
-}
-
-type machine struct {
-	id        int
-	operation string
-}
-
-type data struct {
-	Opers []string
-}
-
 func HtmlPage(w http.ResponseWriter, r *http.Request) {
+	type data struct {
+		Opers []string
+	}
+
 	tmpl := template.Must(template.ParseFiles("./templates/index.html"))
 	tmpl.Execute(w, data{Opers: []string{"+", "-", "*", "/"}})
 }
 
 func SendServers(w http.ResponseWriter, r *http.Request) {
+	type machine struct {
+		id        int
+		operation string
+	}
+
 	res, err := glob_db.db.Query("SELECT * FROM `servers` WHERE operation IS NOT NULL")
 	if err != nil {
 		http.Error(
@@ -72,6 +55,11 @@ func SendServers(w http.ResponseWriter, r *http.Request) {
 }
 
 func SendOpers(w http.ResponseWriter, r *http.Request) {
+	type operation struct {
+		operation string
+		exec_time int
+	}
+
 	opers := []string{"+", "-", "*", "/"}
 
 	for _, oper := range opers {
@@ -115,6 +103,13 @@ func SendOpers(w http.ResponseWriter, r *http.Request) {
 }
 
 func SendProbs(w http.ResponseWriter, r *http.Request) {
+	type problem struct {
+		id              int
+		text            string
+		interm_val      int
+		answer          int
+		operations_left int
+	}
 	var cnt int
 	glob_db.db.QueryRow("SELECT COUNT(*) FROM `problems`").Scan(&cnt)
 
@@ -143,14 +138,14 @@ func SendProbs(w http.ResponseWriter, r *http.Request) {
 			&problem.operations_left,
 		)
 		if err != nil {
-			fmt.Println("error while reading problems")
+			fmt.Println(err)
 		}
 
 		var li string
 
-		if problem.answer == 0 {
+		if problem.operations_left != 0 {
 			li = fmt.Sprintf(
-				"<li><div class='problem'><h2>%s = ...</h2><p>operations_left: %d</p></div></li>",
+				"<li><div class='problem'><h2 class='cursive'>%s = ...</h2><p>operations_left: %d</p></div></li>",
 				problem.text,
 				problem.operations_left,
 			)
@@ -178,17 +173,6 @@ func ProblemHandler(w http.ResponseWriter, r *http.Request) {
 		)
 	}
 
-	var err error
-
-	parsedProb := parseProblem(problem)
-	if err != nil {
-		http.Error(
-			w,
-			http.StatusText(http.StatusBadRequest),
-			http.StatusBadRequest,
-		)
-	}
-
 	var id, cnt int
 
 	glob_db.db.QueryRow(fmt.Sprintf("SELECT COUNT(*), id FROM `problems` WHERE text = '%s' GROUP BY id LIMIT 1;", problem)).
@@ -200,14 +184,26 @@ func ProblemHandler(w http.ResponseWriter, r *http.Request) {
 
 		id++
 
-		groupes := createGroups(id, parsedProb)
-		fmt.Println(glob_db.db.Exec(
+		parsedProb, err := parseProblem(problem)
+
+		groupes, err := createGroups(id, parsedProb)
+
+		glob_db.db.Exec(
 			fmt.Sprintf(
 				"INSERT INTO `problems` (`text`, `operations_left`) values ('%s', %d)",
 				problem,
 				len(groupes),
 			),
-		))
+		)
+
+		if err != nil {
+			slog.Error("err", err)
+			http.Error(
+				w,
+				http.StatusText(http.StatusBadRequest),
+				http.StatusBadRequest,
+			)
+		}
 
 		TransportOperations(groupes)
 	}

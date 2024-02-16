@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log/slog"
 	"math/rand"
-	"strings"
 	"time"
 
 	ev "github.com/apaxa-go/eval"
@@ -12,51 +11,23 @@ import (
 
 var servers []chan Operation
 
-func getOperationCost() []int {
-	result := make([]int, 4)
-	res, err := glob_db.db.Query("SELECT (exec_time) FROM `operations`")
-	if err != nil {
-		slog.Error(fmt.Sprint(err))
-	}
-	i := 0
-	for res.Next() {
-		var val int
-		res.Scan(&val)
-		result[i] = val
-		i++
-	}
-
-	return result
-}
-
 func server(id int, ch chan Operation) {
 	slog.Info(fmt.Sprintf("SERVER %d started", id))
 
 	for prob := range ch {
-		fmt.Println(glob_db.db.Exec(
+		_, err := glob_db.db.Exec(
 			fmt.Sprintf(
 				"UPDATE `servers` SET `operation` = '%s for problem %d'  WHERE id = %d",
 				prob.text,
 				prob.id,
 				id,
 			),
-		))
-
-		costs := getOperationCost()
-		syms := []string{"+", "-", "*", "/"}
-
-		var exec_time int
-
-		ops_text := prob.text
-
-		if rune(ops_text[0]) == rune('-') {
-			ops_text = ops_text[1:]
+		)
+		if err != nil {
+			slog.Error("err", err)
 		}
 
-		for i, cost := range costs {
-			exec_time += cost * strings.Count(ops_text, syms[i])
-		}
-
+		exec_time := ExecutuionTime(prob.text)
 		timer := time.NewTimer(time.Duration(exec_time) * time.Millisecond)
 
 		slog.Info(
@@ -68,6 +39,10 @@ func server(id int, ch chan Operation) {
 		r, _ := expr.EvalToData(nil)
 
 		res, _ := r.AsInt()
+
+		slog.Info(
+			fmt.Sprintf("SERVER %d CALCULATED %v = %d", id, prob, res),
+		)
 
 		<-timer.C
 

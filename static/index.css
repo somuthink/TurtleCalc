@@ -11,6 +11,10 @@ section {
   width: auto;
 }
 
+.cursive {
+  font-style: italic;
+}
+
 .main-container {
   display: flex;
   flex-direction: row;
