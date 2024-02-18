@@ -39,19 +39,20 @@
           hx-swap="none"
         >
           <ul class="oper-list">
-            {{range .Opers}}
+            {{range .}}
             <li>
               <div class="oper-list-elem">
-                <h2>{{ . }}</h2>
+                <h2>{{ .Operation }}</h2>
                 <input
                   type="text"
-                  name="{{ . }}"
+                  name="{{ .Operation }}"
                   placeholder="enter execution time"
+                  value="{{ .Exec_time }}"
                 />
               </div>
             </li>
             {{ end }}
-            <button class="submit-btn" type="submit">Submit</button>
+            <button type="submit">Submit</button>
           </ul>
         </form>
       </section>
@@ -62,6 +63,12 @@
           hx-trigger="load, every 0.5sec"
           hx-target="this"
         ></ul>
+      </section>
+      <section>
+        <img
+          src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExbHpwNXhnOGhka3VwMGdwaWc3MmQ0eHJkMHM2NTlicTN1eXd1cGhuayZlcD12MV9naWZzX3NlYXJjaCZjdD1n/xUNd9FIGEwszzRfdaE/giphy.gif"
+          alt=""
+        />
       </section>
     </div>
   </body>

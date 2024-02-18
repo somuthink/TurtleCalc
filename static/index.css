@@ -31,16 +31,17 @@ section {
   flex-direction: column;
   gap: 20px;
   list-style-type: none;
+  align-items: center;
+
+  h2 {
+    width: 13px;
+    text-align: center;
+  }
 
   .oper-list-elem {
     display: flex;
     flex-direction: row;
     gap: 10px;
-  }
-
-  .submit-btn {
-    margin-left: 40px;
-    margin-top: 10px;
   }
 }
 

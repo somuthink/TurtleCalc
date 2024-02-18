@@ -3,7 +3,7 @@ package internal
 import (
 	"database/sql"
 	"fmt"
-	"log"
+	"log/slog"
 	"os"
 	"strconv"
 
@@ -26,7 +26,7 @@ func get_servers() int {
 func dsn(dbName string) string {
 	err := godotenv.Load()
 	if err != nil {
-		log.Fatal(err)
+		slog.Error("err", err)
 	}
 
 	return fmt.Sprintf(
@@ -46,28 +46,28 @@ func CreateAndOpen(name string) *DB {
 
 	_, err = db.Exec("CREATE DATABASE IF NOT EXISTS " + name)
 	if err != nil {
-		log.Fatal(err)
+		slog.Error("err", err)
 	}
 	db.Close()
 
 	db, err = sql.Open("mysql", dsn(name))
 	if err != nil {
-		panic(err)
+		slog.Error("err", err)
 	}
 
 	_, err = db.Exec(fmt.Sprintf("USE %s", name))
 	if err != nil {
-		log.Fatal(err)
+		slog.Error("err", err)
 	}
 
 	_, err = db.Exec(
 		fmt.Sprintf(
-			"CREATE TABLE IF NOT EXISTS `%s`.`problems` (`id` TINYINT NOT NULL AUTO_INCREMENT , `text` TINYTEXT NOT NULL , `interm_val` INT NOT NULL DEFAULT '0' , `answer` INT NOT NULL DEFAULT '0' , `operations_left` TINYINT NOT NULL , PRIMARY KEY (`id`)) ENGINE = InnoDB;",
+			"CREATE TABLE IF NOT EXISTS `%s`.`problems` (`id` TINYINT NOT NULL AUTO_INCREMENT , `text` TINYTEXT NOT NULL , `interm_val` INT NOT NULL DEFAULT '0' , `answer` INT NOT NULL DEFAULT '0' , `operations_left` TINYINT NOT NULL , `ok` BOOLEAN NOT NULL DEFAULT TRUE, PRIMARY KEY (`id`)) ENGINE = InnoDB;",
 			name,
 		),
 	)
 	if err != nil {
-		log.Fatal(err)
+		slog.Error("err", err)
 	}
 
 	_, err = db.Exec(
@@ -77,7 +77,7 @@ func CreateAndOpen(name string) *DB {
 		),
 	)
 	if err != nil {
-		log.Fatal(err)
+		slog.Error("err", err)
 	}
 
 	var cnt int
@@ -100,13 +100,13 @@ func CreateAndOpen(name string) *DB {
 
 		stmt, err := db.Prepare("INSERT INTO `servers` (operation) VALUES ('nothing')")
 		if err != nil {
-			log.Fatal(err)
+			slog.Error("err", err)
 		}
 		defer stmt.Close()
 		for i := 0; i < get_servers(); i++ {
 			_, err := stmt.Exec()
 			if err != nil {
-				log.Fatal(err)
+				slog.Error("err", err)
 			}
 		}
 

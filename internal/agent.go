@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log/slog"
 	"math/rand"
+	"strings"
 	"time"
 
 	ev "github.com/apaxa-go/eval"
@@ -34,11 +35,21 @@ func server(id int, ch chan Operation) {
 			fmt.Sprintf("SERVER %d PROCESSING %v WHICH WIL TAKE %d MILISEC", id, prob, exec_time),
 		)
 
-		expr, _ := ev.ParseString(prob.text, "")
+		// hardcode moment
 
-		r, _ := expr.EvalToData(nil)
+		if strings.Count(prob.text, "+") > 1 {
+			prob.text = strings.Replace(prob.text, "+", "", -1)
+		}
 
-		res, _ := r.AsInt()
+		expr, err := ev.ParseString(prob.text, "")
+
+		r, err := expr.EvalToData(nil)
+
+		res, ok := r.AsInt()
+
+		if err != nil || !ok {
+			slog.Error("err", err, ok)
+		}
 
 		slog.Info(
 			fmt.Sprintf("SERVER %d CALCULATED %v = %d", id, prob, res),

@@ -9,12 +9,32 @@ import (
 )
 
 func HtmlPage(w http.ResponseWriter, r *http.Request) {
-	type data struct {
-		Opers []string
+	type Operation struct {
+		Operation string
+		Exec_time int
+	}
+
+	var prop_data []Operation
+
+	res, err := glob_db.db.Query("SELECT operation, exec_time FROM `operations` ")
+	if err != nil {
+		slog.Error("err", err)
+	}
+
+	defer res.Close()
+
+	for res.Next() {
+		var operation Operation
+		err := res.Scan(&operation.Operation, &operation.Exec_time)
+		if err != nil {
+			slog.Error("err", err)
+		}
+		prop_data = append(prop_data, operation)
 	}
 
 	tmpl := template.Must(template.ParseFiles("./templates/index.html"))
-	tmpl.Execute(w, data{Opers: []string{"+", "-", "*", "/"}})
+
+	tmpl.Execute(w, prop_data)
 }
 
 func SendServers(w http.ResponseWriter, r *http.Request) {
@@ -71,35 +91,6 @@ func SendOpers(w http.ResponseWriter, r *http.Request) {
 			oper,
 		))
 	}
-
-	// res, err := glob_db.db.Query("SELECT operation, exec_time FROM `operations` ")
-	// if err != nil {
-	// 	http.Error(
-	// 		w,
-	// 		http.StatusText(http.StatusInternalServerError),
-	// 		http.StatusInternalServerError,
-	// 	)
-	// }
-	//
-	// defer res.Close()
-	//
-	// for res.Next() {
-	// 	var operation operation
-	// 	err := res.Scan(&operation.operation, &operation.exec_time)
-	// 	if err != nil {
-	// 		fmt.Println("error while reading problems")
-	// 	}
-	//
-	// 	li := fmt.Sprintf(
-	// 		"<div class='oper-list-elem'><h2>%s</h2> <input type='text' value=%d name=%s placeholder='enter execution time'/></div>",
-	// 		operation.operation,
-	// 		operation.exec_time,
-	// 		operation.operation,
-	// 	)
-	//
-	// 	w.Write([]byte(li))
-	//
-	// }
 }
 
 func SendProbs(w http.ResponseWriter, r *http.Request) {
@@ -109,6 +100,7 @@ func SendProbs(w http.ResponseWriter, r *http.Request) {
 		interm_val      int
 		answer          int
 		operations_left int
+		ok              int
 	}
 	var cnt int
 	glob_db.db.QueryRow("SELECT COUNT(*) FROM `problems`").Scan(&cnt)
@@ -136,28 +128,31 @@ func SendProbs(w http.ResponseWriter, r *http.Request) {
 			&problem.interm_val,
 			&problem.answer,
 			&problem.operations_left,
+			&problem.ok,
 		)
 		if err != nil {
 			fmt.Println(err)
 		}
 
-		var li string
+		li := "<li><div class='problem'>"
 
 		if problem.operations_left != 0 {
-			li = fmt.Sprintf(
-				"<li><div class='problem'><h2 class='cursive'>%s = ...</h2><p>operations_left: %d</p></div></li>",
+			li += fmt.Sprintf(
+				"<h2 class='cursive'>%s = ...</h2><p>operations_left: %d</p>",
 				problem.text,
 				problem.operations_left,
 			)
+		} else if problem.ok == 0 {
+			li += fmt.Sprintf("<h2 class='bad'>%s</h2><p>bad format error</p>", problem.text)
 		} else {
-			li = fmt.Sprintf(
-				"<li><div class='problem'><h2>%s = %d</h2></div></li>",
+			li += fmt.Sprintf(
+				"<h2>%s = <u>%d</u></h2>",
 				problem.text,
 				problem.answer,
 			)
 		}
 
-		w.Write([]byte(li))
+		w.Write([]byte(li + "</div></li>"))
 
 	}
 }
@@ -180,6 +175,8 @@ func ProblemHandler(w http.ResponseWriter, r *http.Request) {
 
 	if cnt == 0 {
 
+		var ok int = 1
+
 		glob_db.db.QueryRow("SELECT COUNT(*) FROM `problems`").Scan(&id)
 
 		id++
@@ -187,12 +184,16 @@ func ProblemHandler(w http.ResponseWriter, r *http.Request) {
 		parsedProb, err := parseProblem(problem)
 
 		groupes, err := createGroups(id, parsedProb)
+		if err != nil {
+			ok = 0
+		}
 
 		glob_db.db.Exec(
 			fmt.Sprintf(
-				"INSERT INTO `problems` (`text`, `operations_left`) values ('%s', %d)",
+				"INSERT INTO `problems` (`text`, `operations_left`, `ok`) values ('%s', %d, %d)",
 				problem,
 				len(groupes),
+				ok,
 			),
 		)
 
