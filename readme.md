@@ -15,7 +15,7 @@
 go mod download
 ```
 
-Утсановите и запустите локальную базу данных через docker
+Запустите базу данных через docker
 ```sh
 docker-compose -f docker-compose.client.yml up
 ```
