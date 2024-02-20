@@ -36,7 +36,7 @@ func splitOperations(id int, expression string) ([]Operation, error) {
 	var operations []Operation
 
 	if len(expression) == 0 {
-		return operations, errors.New("expression is empty")
+		return operations, nil
 	}
 
 	re := regexp.MustCompile(`\-?\d+[\+\-]\d+`)

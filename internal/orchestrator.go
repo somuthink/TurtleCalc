@@ -185,6 +185,7 @@ func ProblemHandler(w http.ResponseWriter, r *http.Request) {
 
 		groupes, err := createGroups(id, parsedProb)
 		if err != nil {
+			slog.Error("parse err", err)
 			ok = 0
 		}
 
