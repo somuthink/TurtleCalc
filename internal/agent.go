@@ -37,8 +37,10 @@ func server(id int, ch chan Operation) {
 
 		// hardcode moment
 
-		if strings.Count(prob.text, "+") > 1 {
-			prob.text = strings.Replace(prob.text, "+", "", -1)
+		cnt := strings.Count(prob.text, "+")
+
+		if cnt > 1 {
+			prob.text = strings.Replace(prob.text, "+", "", cnt-1)
 		}
 
 		expr, err := ev.ParseString(prob.text, "")
